@@ -3,9 +3,8 @@
 ''' To do: 
   Make the computer a little smarter. 
     - It is too aggressive when the deck is closed.  It should try to save trump cards... 
-    - It should pay attention to the score, and play more aggressively when someone gets close to winning...
-    - Both of the above problems could be partially solved if the ai just checked to see if one of the players would win the game if it played a certain card... easy to do when following, not as easy when leading, but possible to make a guess...
     - In Schnapsen, it should take marriages into account when deciding to close the deck. 
+  Institute 7 game point matches.  
 '''
 
 # schnapsenMode = true
@@ -21,7 +20,7 @@ suitNumber = {C: 3, D: 0, H: 2, S: 1}
 suitString = {C: '&clubs;', D: '<span style="color:red">&diams;</span>', H: '<span style="color:red">&hearts;</span>', S: '&spades;'}
 
 valueRank = {9: 9, 10: 13, J: 10, Q: 11, K: 12, A: 14}
-#valuePoints = {9: 0, 10: 10, J: 0, Q: 0, K: 10, A: 10} # Alternative scoring for "Seven Bells"
+# valuePoints = {9: 0, 10: 10, J: 0, Q: 0, K: 10, A: 10} # Alternative scoring for "Seven Bells"
 valuePoints = {9: 0, 10: 10, J: 2, Q: 3, K: 4, A: 11}
 
 randElement = (array) -> array[Math.floor(Math.random() * array.length)]
@@ -72,6 +71,8 @@ class ComputerAI
     options = computer.getCards()
     if game.playerPoints > 45 or game.computerPoints > 45
       this.aggressive = true
+    else
+      this.aggressive = false
     toppers = this.topCards()
     if toppers.length > 0
       likelyPoints = (card.points for card in toppers).reduce((a,b)->a+b)+game.computerPoints
@@ -83,12 +84,18 @@ class ComputerAI
     nontrumpOptions = (card for card in options when not card.isTrump())
     certainWinners = (card for card in options when this.certainWin(card))
     marriageCards = (card for card in options when isMarriage(card.value,card.suit,computer))
-    if certainWinners.length > 0 and game.deckClosed
-      certainWinners[0].computerPlay()
+    trumpMarriageCards = (card for card in marriageCards when card.suit == game.trumpSuit)
+    if certainWinners.length > 0 and this.aggressive
+      if schnapsenMode or (not schnapsenMode and (game.deckClosed or marriageCards.length == 0))
+        certainWinners[0].computerPlay()
+      else
+        if trumpMarriageCards.length > 0
+          trumpMarriageCards[0].computerPlay()
+        else
+          marriageCards[0].computerPlay()
     else if marriageCards.length > 0 and (not game.deckClosed or schnapsenMode)
-      trumpCards = (card for card in marriageCards when card.suit == game.trumpSuit)
-      if trumpCards.length > 0
-        trumpCards[0].computerPlay()
+      if trumpMarriageCards.length > 0
+        trumpMarriageCards[0].computerPlay()
       else
         marriageCards[0].computerPlay()
     else if nontrumpOptions.length > 0
@@ -96,12 +103,15 @@ class ComputerAI
     else
       randElement(options).computerPlay()
   netValue: (card,playersCard) ->
-    return card.points+playersCard.points-this.cardValue(card)
+    if cardLedWins(playersCard,card)
+      return -card.points-playersCard.points-this.cardValue(card)
+    else
+      return +card.points+playersCard.points-this.cardValue(card)
   worstCard: (options) ->
     options.sort((a,b)=>this.cardValue(a)>this.cardValue(b))
     options[0]
   bestValue: (options,playersCard) ->
-    options.sort((a,b)=>this.netValue(a,playersCard)>this.netValue(b,playersCard))
+    options.sort((a,b)=>this.netValue(a,playersCard)<this.netValue(b,playersCard))
     options[0]
   bestFollow: () =>
     options = computer.getCards()
@@ -112,14 +122,10 @@ class ComputerAI
       this.aggressive = false
     legalOptions = (card for card in options when isLegal(playersCard,card,options))
     winningOptions = (card for card in legalOptions when not cardLedWins(playersCard,card))
-    worthwhileOptions = (card for card in winningOptions when this.netValue(card,playersCard) > 0)
     if this.aggressive and winningOptions.length > 0
       winningOptions[0].computerPlay()
     else
-      if worthwhileOptions.length > 0
-        this.bestValue(worthwhileOptions,playersCard).computerPlay()
-      else
-        this.worstCard(legalOptions).computerPlay()
+      this.bestValue(legalOptions,playersCard).computerPlay()
 
 class Card
   constructor: (value,suit) ->
