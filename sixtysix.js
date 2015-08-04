@@ -306,7 +306,7 @@
     ComputerAI.prototype.worstCard = function(options) {
       var _this = this;
       options.sort(function(a, b) {
-        return _this.cardValue(a) > _this.cardValue(b);
+        return _this.cardValue(a) - _this.cardValue(b);
       });
       return options[0];
     };
@@ -314,7 +314,7 @@
     ComputerAI.prototype.bestValue = function(options, playersCard) {
       var _this = this;
       options.sort(function(a, b) {
-        return _this.netValue(a, playersCard) < _this.netValue(b, playersCard);
+        return _this.netValue(b, playersCard) - _this.netValue(a, playersCard);
       });
       return options[0];
     };

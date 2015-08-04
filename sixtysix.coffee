@@ -113,10 +113,10 @@ class ComputerAI
     else
       return +card.points+playersCard.points-this.cardValue(card)
   worstCard: (options) ->
-    options.sort((a,b)=>this.cardValue(a)>this.cardValue(b))
+    options.sort((a,b)=>this.cardValue(a)-this.cardValue(b))
     options[0]
   bestValue: (options,playersCard) ->
-    options.sort((a,b)=>this.netValue(a,playersCard)<this.netValue(b,playersCard))
+    options.sort((a,b)=>this.netValue(b,playersCard)-this.netValue(a,playersCard))
     options[0]
   bestFollow: () =>
     options = computer.getCards()
