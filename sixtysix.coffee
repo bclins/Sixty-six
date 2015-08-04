@@ -2,9 +2,7 @@
 #
 ''' To do: 
   Make the computer a little smarter. 
-    - It is too aggressive when the deck is closed.  It should try to save trump cards... 
-    - In Schnapsen, it should take marriages into account when deciding to close the deck. 
-  Institute 7 game point matches.  
+    - When following with a trump card, it should probably save higher rank trump cards for later.  
 '''
 
 # schnapsenMode = true
@@ -69,6 +67,11 @@ class ComputerAI
   bestLead: () ->
     # select the best card in the computer's hand to lead
     options = computer.getCards()
+    nontrumpOptions = (card for card in options when not card.isTrump())
+    certainWinners = (card for card in options when this.certainWin(card))
+    nontrumpWinners = (card for card in certainWinners when not card.isTrump())
+    marriageCards = (card for card in options when isMarriage(card.value,card.suit,computer))
+    trumpMarriageCards = (card for card in marriageCards when card.suit == game.trumpSuit)
     if game.playerPoints > 45 or game.computerPoints > 45
       this.aggressive = true
     else
@@ -78,14 +81,16 @@ class ComputerAI
       likelyPoints = (card.points for card in toppers).reduce((a,b)->a+b)+game.computerPoints
     else
       likelyPoints = 0
+    if marriageCards.length > 0 and schnapsenMode
+      likelyPoints += 10
+    if trumpMarriageCards.length > 0 and schnapsenMode
+      likelyPoints += 10
     topTrumps = (card for card in toppers when card.isTrump())
     if ((likelyPoints > 55 and topTrumps.length > 1) or (likelyPoints > 65 and topTrumps.length > 0)) and not game.deckClosed
       game.computerClose()
-    nontrumpOptions = (card for card in options when not card.isTrump())
-    certainWinners = (card for card in options when this.certainWin(card))
-    marriageCards = (card for card in options when isMarriage(card.value,card.suit,computer))
-    trumpMarriageCards = (card for card in marriageCards when card.suit == game.trumpSuit)
-    if certainWinners.length > 0 and this.aggressive
+    if nontrumpWinners.length > 0
+      randElement(nontrumpWinners).computerPlay()
+    else if certainWinners.length > 0 and this.aggressive
       if schnapsenMode or (not schnapsenMode and (game.deckClosed or marriageCards.length == 0))
         certainWinners[0].computerPlay()
       else
@@ -339,7 +344,7 @@ class Game
     if not computerHaul.isEmpty()
       this.computerPoints += this.computerProvisional
       this.computerProvisional = 0
-    document.getElementById("scorebar").innerHTML="<p>You: #{this.playerPoints} points. #{this.playerMarriages} &nbsp;  &nbsp; &nbsp; &nbsp; &nbsp; Trump: #{suitString[this.trumpSuit]} &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Computer: #{this.computerPoints} points. #{this.computerMarriages}"
+    document.getElementById("scorebar").innerHTML="<p>You: #{this.playerPoints} points. #{this.playerMarriages} &nbsp;  &nbsp; &nbsp; &nbsp; &nbsp; Trump: <span style='font-size:22px;'>#{suitString[this.trumpSuit]}</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Computer: #{this.computerPoints} points. #{this.computerMarriages}"
   checkWinner: (autowinner='none') =>
     gameOver = false
     this.score()

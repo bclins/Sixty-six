@@ -20,7 +20,7 @@
 
   -webkit-transition-property: left, top, -webkit-transform;
   -webkit-transition-duration: 0.6s;
-  -webkit-transition-timing-function: ease-out, ease-out, ease-in-out;
+  -webkit-transition-timing-function: ease-in-out;
 
 }
 
