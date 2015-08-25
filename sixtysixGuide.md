@@ -23,7 +23,7 @@ This game uses a 24 card deck, with aces high and nines low.  The ten is the sec
 
 ### Play 
 
-The goal is to win 66 points before your opponent does.  During the first half of the game, players do not need to follow suit. When all of the cards from the stack have been drawn, or after someone closes the stack, the rules change and players must follow suit.  If a player cannot follow suit, then they must play a trump card if they have one. You also can't score for marriages in sixty six after the stack is closed or empty, unlike in [schnapsen](schnapsen.html).  
+The goal is to win 66 points before your opponent does.  During the first half of the game, players do not need to follow suit. When all of the cards from the stack have been drawn, or after someone closes the stack, the rules change and players must follow suit and they must win the trick if they can.  If a player cannot follow suit, then they must play a trump card if they have one. You also can't score for marriages in sixty six after the stack is closed or empty, unlike in [schnapsen](schnapsen.html).  
 
 Here is how the game handles the following situations. 
 

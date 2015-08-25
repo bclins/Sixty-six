@@ -1,24 +1,21 @@
-# A program to let the user play sixty six against the computer.
-#
-''' To do: 
-  Make the computer a little smarter. 
-    - When following with a trump card, it should probably save higher rank trump cards for later.  
+''' 
+A program to let the user play sixty-six and schnapsen against the computer.
+
+To do: Make the computer a little smarter. 
 '''
 
-# schnapsenMode = true
 if schnapsenMode
   lowRank = 'J'
 else
   lowRank = '9'
 
-cardPath = 'images/cards/' # images/cards-nicubunu/
+cardPath = 'images/cards/'
 
 suitNumber = {C: 3, D: 0, H: 2, S: 1}
 
 suitString = {C: '&clubs;', D: '<span style="color:red">&diams;</span>', H: '<span style="color:red">&hearts;</span>', S: '&spades;'}
 
 valueRank = {9: 9, 10: 13, J: 10, Q: 11, K: 12, A: 14}
-# valuePoints = {9: 0, 10: 10, J: 0, Q: 0, K: 10, A: 10} # Alternative scoring for "Seven Bells"
 valuePoints = {9: 0, 10: 10, J: 2, Q: 3, K: 4, A: 11}
 
 randElement = (array) -> array[Math.floor(Math.random() * array.length)]
@@ -189,7 +186,7 @@ class Card
         if not gameOver
           setTimeout(endRound,1200)
       else
-        alert("Now that the stack is closed, you must follow suit! If you can't follow suit, you must trump if you can.")
+        alert("Now that the stack is closed, you must follow suit! You must also win the trick if you can.")
   computerPlay: () =>
     hand = computer.getCards()
     computerCard.placeUp(this)
@@ -496,8 +493,20 @@ class Table
       this.html.appendChild(card.html)
 
 isLegal = (cardLed,card2,hand2) ->
-  suits2 = (card.suit for card in hand2)
-  (not game.deckClosed) or (cardLed.suit == card2.suit) or ((cardLed.suit not in suits2) and (card2.isTrump() or game.trumpSuit not in suits2))
+  suitFollowers = (card for card in hand2 when card.suit == cardLed.suit)
+  suitWinners = (card for card in suitFollowers when card.rank > cardLed.rank)
+  trumpCards = (card for card in hand2 when card.isTrump())
+  if not game.deckClosed
+    return true
+  else if suitFollowers.length > 0
+    if suitWinners.length > 0
+      return card2.suit == cardLed.suit and card2.rank > cardLed.rank
+    else
+      return card2.suit == cardLed.suit
+  else if trumpCards.length > 0
+    return card2.isTrump()
+  else
+    return true
     
 computerLead = () ->
   if not game.deckClosed and computer.hasCard(lowRank+game.trumpSuit)
