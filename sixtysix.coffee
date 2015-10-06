@@ -1,13 +1,15 @@
 ''' 
 A program to let the user play sixty-six and schnapsen against the computer.
 
-To do: Make the computer a little smarter. 
+To do: Make the computer smarter. 
 '''
 
 if schnapsenMode
   lowRank = 'J'
 else
   lowRank = '9'
+
+alternateDeals = 1 # always counts as true in schnapsenMode, but in sixty-six the winner deals if set to false.  
 
 cardPath = 'images/cards/'
 
@@ -29,7 +31,7 @@ class ComputerAI
   cardValue: (card) ->
     value = this.baseCardValues[card.value]
     if card.suit == game.trumpSuit
-      value += this.trumpValueBonus
+      value += this.trumpValueBonus # there should be a more nuanced value system...
     if isMarriage(card.id[0],card.id[1],computer) and (not game.deckClosed or schnapsenMode)
       value += Math.max(this.marriageBonus - game.round,0)
     return value
@@ -85,8 +87,10 @@ class ComputerAI
     topTrumps = (card for card in toppers when card.isTrump())
     if ((likelyPoints > 55 and topTrumps.length > 1) or (likelyPoints > 65 and topTrumps.length > 0)) and not game.deckClosed
       game.computerClose()
+    # Heuristic: If you have a guaranteed winner that is not a trump card, play it.
     if nontrumpWinners.length > 0
       randElement(nontrumpWinners).computerPlay()
+    # Heuristic: If you are playing aggressively, play a winner if you have one.
     else if certainWinners.length > 0 and this.aggressive
       if schnapsenMode or (not schnapsenMode and (game.deckClosed or marriageCards.length == 0))
         certainWinners[0].computerPlay()
@@ -95,15 +99,15 @@ class ComputerAI
           trumpMarriageCards[0].computerPlay()
         else
           marriageCards[0].computerPlay()
+    # Heuristic: Play a marriage if you have one.
     else if marriageCards.length > 0 and (not game.deckClosed or schnapsenMode)
       if trumpMarriageCards.length > 0
         trumpMarriageCards[0].computerPlay()
       else
         marriageCards[0].computerPlay()
-    else if nontrumpOptions.length > 0
-      randElement(nontrumpOptions).computerPlay()
+    # Heuristic: If you don't have a marriage, lead with your lowest value card.
     else
-      randElement(options).computerPlay()
+      this.worstCard(options).computerPlay()
   netValue: (card,playersCard) ->
     if cardLedWins(playersCard,card)
       return -card.points-playersCard.points-this.cardValue(card)
@@ -124,10 +128,12 @@ class ComputerAI
       this.aggressive = false
     legalOptions = (card for card in options when isLegal(playersCard,card,options))
     winningOptions = (card for card in legalOptions when not cardLedWins(playersCard,card))
+    # The computer needs to do a better job at saving high value trump cards...
     if this.aggressive and winningOptions.length > 0
       winningOptions[0].computerPlay()
     else
       this.bestValue(legalOptions,playersCard).computerPlay()
+    # Here is a good heuristic: if you have a marriage and there is time left to play it, then you should play aggressive (but you have to make sure that you don't spoil the marriage by playing aggressively!)
 
 class Card
   constructor: (value,suit) ->
@@ -137,7 +143,6 @@ class Card
     this.points = valuePoints[this.value]
     this.id = this.value+this.suit
     this.isTrump = () -> this.suit == game.trumpSuit
-    this.trueValue = () -> valuePoints[this.value] + 10*this.isTrump()
     this.toString = () -> this.value+suitString[this.suit]
     this.front = "<img src='#{cardPath}#{this.id}.png'></img>"
     this.back = "<img src='#{cardPath}back.png'></img>"
@@ -176,9 +181,9 @@ class Card
             game.marriages += this.suit
             game.playerMarriages += suitString[this.suit]
             if this.suit == game.trumpSuit
-              game.playerProvisional += 40
+              game.playerPoints += 40
             else
-              game.playerProvisional += 20
+              game.playerPoints += 20
             game.score()
             gameOver = game.checkWinner()
           if not gameOver
@@ -195,10 +200,10 @@ class Card
         game.marriages += this.suit
         game.computerMarriages += suitString[this.suit]
         if this.suit == game.trumpSuit
-          game.computerProvisional += 40
+          game.computerPoints += 40
           alert('Royal marriage!')
         else
-          game.computerProvisional += 20
+          game.computerPoints += 20
           alert('Marriage!')
         game.score()
         game.checkWinner()
@@ -271,11 +276,9 @@ class Game
   constructor: () ->
     this.computerPoints = 0
     this.playerPoints = 0
-    this.computerProvisional = 0
-    this.playerProvisional = 0
     this.computerGamepoints = 0
     this.playerGamepoints = 0
-    this.marriages = ''
+    this.marriages = '' # right now, this is only used by the cardTracker...
     this.computerMarriages = ''
     this.playerMarriages = ''
     this.trumpSuit = ''
@@ -335,14 +338,16 @@ class Game
     this.deckCloser = 'computer'
     this.nonCloserPoints = Math.max(this.playerPoints,not playerHaul.isEmpty())
   score: () ->
-    if not playerHaul.isEmpty()
-      this.playerPoints += this.playerProvisional
-      this.playerProvisional = 0
-    if not computerHaul.isEmpty()
-      this.computerPoints += this.computerProvisional
-      this.computerProvisional = 0
-    document.getElementById("scorebar").innerHTML="<p>You: #{this.playerPoints} points. #{this.playerMarriages} &nbsp;  &nbsp; &nbsp; &nbsp; &nbsp; Trump: <span style='font-size:22px;'>#{suitString[this.trumpSuit]}</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Computer: #{this.computerPoints} points. #{this.computerMarriages}"
-  checkWinner: (autowinner='none') =>
+    if playerHaul.isEmpty()
+      playerProvisional = 0
+    else
+      playerProvisional = this.playerPoints
+    if computerHaul.isEmpty()
+      computerProvisional = 0
+    else
+      computerProvisional = this.computerPoints
+    document.getElementById("scorebar").innerHTML="<p>You: #{playerProvisional} points. #{this.playerMarriages} &nbsp;  &nbsp; &nbsp; &nbsp; &nbsp; Trump: <span style='font-size:22px;'>#{suitString[this.trumpSuit]}</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Computer: #{computerProvisional} points. #{this.computerMarriages}"
+  checkWinner: (lastTrickWinner='none') =>
     gameOver = false
     this.score()
     if this.deckCloser.length > 0
@@ -400,29 +405,34 @@ class Game
               this.announceWinner('player',3,'Unsuccessful fold. ')
           this.nextGame()
     else # if the deck was not closed
-      if this.playerPoints > 65 or this.computerPoints > 65 or autowinner != 'none'
+      if this.playerPoints > 65 or this.computerPoints > 65
         gameOver = true
-        if this.playerPoints > 65 or autowinner == 'player'
+        if this.playerPoints > 65 or lastTrickWinner == 'player'
           this.playerLeads = false
           if computerHaul.isEmpty()
             this.announceWinner('player',3)
-          if not computerHaul.isEmpty() and this.computerPoints < 33
-            this.announceWinner('player',2)
-          if this.computerPoints >= 33
-            this.announceWinner('player',1)
+          else
+            if this.computerPoints < 33
+              this.announceWinner('player',2)
+            else
+              this.announceWinner('player',1)
         else # computer is the first to reach 66.
           this.playerLeads = true
           if playerHaul.isEmpty()
             this.announceWinner('computer',3)
-          if not playerHaul.isEmpty() and this.playerPoints < 33
-            this.announceWinner('computer',2)
-          if this.playerPoints >= 33
-            this.announceWinner('computer',1)
+          else
+            if this.playerPoints < 33
+              this.announceWinner('computer',2)
+            else
+              this.announceWinner('computer',1)
         this.nextGame()
       else # no one has 66 points yet and the deck isn't closed.
-        if player.isEmpty() and this.playerPoints == 65 and this.computerPoints == 65 and not schnapsenMode
+        if player.isEmpty() and this.playerPoints == 65 and this.computerPoints == 65
           gameOver = true
-          alert("Wow, it's a tie!")
+          if schnapsenMode
+            this.announceWinner(lastTrickWinner,1)
+          else
+            alert("Wow, it's a tie!")
           this.nextGame()
     return gameOver
   announceWinner: (winner,points,preamble = '') ->
@@ -444,8 +454,6 @@ class Game
     this.gameNumber += 1
     this.computerPoints = 0
     this.playerPoints = 0
-    this.playerProvisional = 0
-    this.computerProvisional = 0
     this.marriages = ''
     this.computerMarriages = ''
     this.playerMarriages = ''
@@ -456,7 +464,7 @@ class Game
     setTimeout(this.startNext,1000)
   startNext: () =>
     this.initialize()
-    if schnapsenMode
+    if schnapsenMode or alternateDeals
       this.playerLeads = (this.gameNumber % 2 == 1)
     if this.playerLeads == false
       setTimeout(computerLead,1000)
@@ -526,28 +534,23 @@ isMarriage = (value,suit,handLocation) =>
   return value in ['K','Q'] and handLocation.hasCard(partner[value]+suit)
 
 endRound = () ->
-  autowinner = 'none'
   if playerWins()
     playerCard.select().playerTakes()
     computerCard.select().playerTakes()
     game.playerLeads = true
+    lastTrickWinner = 'player'
   else
     playerCard.select().computerTakes()
     computerCard.select().computerTakes()
     game.playerLeads = false
+    lastTrickWinner = 'computer'
   if player.isEmpty() and talon.isEmpty()
     if game.playerLeads
-      if schnapsenMode
-        autowinner = 'player'
-      else
-        game.playerPoints += 10
+      game.playerPoints += 10
     else
-      if schnapsenMode
-        autowinner = 'computer'
-      else
-        game.computerPoints += 10
+      game.computerPoints += 10
     game.score()
-  if not game.checkWinner(autowinner)
+  if not game.checkWinner(lastTrickWinner)
     nextRound()
 
 nextRound = () ->
