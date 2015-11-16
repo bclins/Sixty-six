@@ -25,7 +25,7 @@ randElement = (array) -> array[Math.floor(Math.random() * array.length)]
 class ComputerAI
   constructor: () ->
     this.baseCardValues = {9: 0, 10: 10, J: 2, Q: 3, K: 4, A: 11}
-    this.trumpValueBonus = 6
+    this.trumpValueBonus = 9
     this.marriageBonus = 10
     this.aggressive = false
   cardValue: (card) ->
