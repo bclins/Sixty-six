@@ -65,7 +65,7 @@
         K: 4,
         A: 11
       };
-      this.trumpValueBonus = 6;
+      this.trumpValueBonus = 9;
       this.marriageBonus = 10;
       this.aggressive = false;
     }
@@ -297,9 +297,9 @@
 
     ComputerAI.prototype.netValue = function(card, playersCard) {
       if (cardLedWins(playersCard, card)) {
-        return -card.points - playersCard.points - this.cardValue(card);
+        return -playersCard.points - this.cardValue(card);
       } else {
-        return +card.points + playersCard.points - this.cardValue(card);
+        return card.points + playersCard.points - this.cardValue(card);
       }
     };
 

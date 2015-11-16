@@ -19,6 +19,7 @@ suitString = {C: '&clubs;', D: '<span style="color:red">&diams;</span>', H: '<sp
 
 valueRank = {9: 9, 10: 13, J: 10, Q: 11, K: 12, A: 14}
 valuePoints = {9: 0, 10: 10, J: 2, Q: 3, K: 4, A: 11}
+#valuePoints = {9: 0, 10: 10, J: 0, Q: 0, K: 10, A: 10}
 
 randElement = (array) -> array[Math.floor(Math.random() * array.length)]
 
@@ -110,9 +111,9 @@ class ComputerAI
       this.worstCard(options).computerPlay()
   netValue: (card,playersCard) ->
     if cardLedWins(playersCard,card)
-      return -card.points-playersCard.points-this.cardValue(card)
+      return -playersCard.points-this.cardValue(card)
     else
-      return +card.points+playersCard.points-this.cardValue(card)
+      return card.points+playersCard.points-this.cardValue(card)
   worstCard: (options) ->
     options.sort((a,b)=>this.cardValue(a)-this.cardValue(b))
     options[0]
