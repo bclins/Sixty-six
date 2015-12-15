@@ -331,13 +331,15 @@ class Game
       trumpCard.getCards()[0].turnDown()
       this.deckClosed = true
       this.deckCloser = 'player'
-      this.nonCloserPoints = Math.max(this.computerPoints,not computerHaul.isEmpty())
+      # For Viennese style closing in Schnapsen:
+      this.nonCloserPoints = Math.max(this.computerPoints*(not computerHaul.isEmpty()),not computerHaul.isEmpty())
   computerClose: () =>
     alert("I'm closing the stack.")
     trumpCard.getCards()[0].turnDown()
     this.deckClosed = true
     this.deckCloser = 'computer'
-    this.nonCloserPoints = Math.max(this.playerPoints,not playerHaul.isEmpty())
+    # For Viennese style closing in Schnapsen:
+    this.nonCloserPoints = Math.max(this.playerPoints*(not playerHaul.isEmpty()),not playerHaul.isEmpty())
   score: () ->
     if playerHaul.isEmpty()
       playerProvisional = 0
@@ -351,14 +353,14 @@ class Game
   checkWinner: (lastTrickWinner='none') =>
     gameOver = false
     this.score()
-    if this.deckCloser.length > 0
+    if this.deckCloser.length > 0 # If someone has closed the deck
       if this.playerPoints > 65 or this.computerPoints > 65
         gameOver = true
         if this.playerPoints > 65
           if this.deckCloser == 'player'
             this.playerLeads = false
             if not schnapsenMode # In 66, score in this case depends on current points.
-              this.nonCloserPoints = Math.max(this.computerPoints,not computerHaul.isEmpty())
+              this.nonCloserPoints = Math.max(this.computerPoints*(not computerHaul.isEmpty()),not computerHaul.isEmpty())
             if this.nonCloserPoints == 0
               this.announceWinner('player',3)
             if this.nonCloserPoints > 0 and this.nonCloserPoints < 33
@@ -375,7 +377,7 @@ class Game
           if this.deckCloser == 'computer'
             this.playerLeads = true
             if not schnapsenMode
-              this.nonCloserPoints = Math.max(this.playerPoints,not playerHaul.isEmpty())
+              this.nonCloserPoints = Math.max(this.playerPoints*(not playerHaul.isEmpty()),not playerHaul.isEmpty())
             if this.nonCloserPoints == 0
               this.announceWinner('computer',3)
             if this.nonCloserPoints > 0 and this.nonCloserPoints < 33
@@ -406,9 +408,9 @@ class Game
               this.announceWinner('player',3,'Unsuccessful fold. ')
           this.nextGame()
     else # if the deck was not closed
-      if this.playerPoints > 65 or this.computerPoints > 65
+      if this.playerPoints > 65 or this.computerPoints > 65 # if someone has reached 66
         gameOver = true
-        if this.playerPoints > 65 or lastTrickWinner == 'player'
+        if this.playerPoints > 65 or lastTrickWinner == 'player' # if player is the winner
           this.playerLeads = false
           if computerHaul.isEmpty()
             this.announceWinner('player',3)

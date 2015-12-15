@@ -738,7 +738,7 @@
         trumpCard.getCards()[0].turnDown();
         this.deckClosed = true;
         this.deckCloser = 'player';
-        return this.nonCloserPoints = Math.max(this.computerPoints, !computerHaul.isEmpty());
+        return this.nonCloserPoints = Math.max(this.computerPoints * (!computerHaul.isEmpty()), !computerHaul.isEmpty());
       }
     };
 
@@ -747,7 +747,7 @@
       trumpCard.getCards()[0].turnDown();
       this.deckClosed = true;
       this.deckCloser = 'computer';
-      return this.nonCloserPoints = Math.max(this.playerPoints, !playerHaul.isEmpty());
+      return this.nonCloserPoints = Math.max(this.playerPoints * (!playerHaul.isEmpty()), !playerHaul.isEmpty());
     };
 
     Game.prototype.score = function() {
@@ -779,7 +779,7 @@
             if (this.deckCloser === 'player') {
               this.playerLeads = false;
               if (!schnapsenMode) {
-                this.nonCloserPoints = Math.max(this.computerPoints, !computerHaul.isEmpty());
+                this.nonCloserPoints = Math.max(this.computerPoints * (!computerHaul.isEmpty()), !computerHaul.isEmpty());
               }
               if (this.nonCloserPoints === 0) {
                 this.announceWinner('player', 3);
@@ -802,7 +802,7 @@
             if (this.deckCloser === 'computer') {
               this.playerLeads = true;
               if (!schnapsenMode) {
-                this.nonCloserPoints = Math.max(this.playerPoints, !playerHaul.isEmpty());
+                this.nonCloserPoints = Math.max(this.playerPoints * (!playerHaul.isEmpty()), !playerHaul.isEmpty());
               }
               if (this.nonCloserPoints === 0) {
                 this.announceWinner('computer', 3);
