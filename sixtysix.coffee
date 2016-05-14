@@ -3,8 +3,6 @@ A program to let the user play sixty-six and schnapsen against the computer.
 
 To do: 
   * Make the computer smarter. 
-    - Sometimes the computer can win with one move, and it should be smart enough to detect that.
-  * On a tie in 66, the next game should be worth an extra point. 
 '''
 
 if schnapsenMode
