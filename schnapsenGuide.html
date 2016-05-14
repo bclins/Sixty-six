@@ -18,9 +18,7 @@
   th { border: 1px solid #000; }  
   td { border: 1px solid #000; }  
 </style>
-
-<hr> 
-
+<hr>
 <p>This is a quick guide to playing the <a href="schnapsen.html">schnapsen webapp</a>. For more detailed rules, see <a href="http://www.pagat.com/marriage/schnaps.html">www.pagat.com/marriage/schnaps.html</a>.</p>
 <h3 id="card-rank-and-value">Card Rank and Value</h3>
 <p>This game uses a 20 card deck, with aces high and jacks low. The ten is the second highest card in each suit, after the ace. Cards taken in tricks are worth points given by the values in the table below.</p>
@@ -47,12 +45,52 @@
 </tbody>
 </table>
 <h3 id="play">Play</h3>
-<p>The goal is to win 66 points before your opponent does. During the first half of the game, players do not need to follow suit. When all of the cards from the stack have been drawn, or after someone closes the stack, the rules change and players must follow suit and they must win the trick if they can. If a player cannot follow suit, then they must play a trump card if they have one.</p>
+<p>The goal is to win 66 points before your opponent does. During the first half of the game, players do not need to follow suit. When all of the cards from the stack have been drawn, or after someone closes the stack, the rules change and players must follow suit and they must win the trick if they can. If a player cannot follow suit, then they must play a trump card if they have one. If the stack is not closed and neither player reaches 66 points before the last trick, then the winner of the last trick automatically wins the game.</p>
 <p>Here is how the game handles the following situations.</p>
-<p><strong>Marriages</strong> If you have both the king and queen of a suit, and lead with either, it automatically scores a marriage. A regular marriage is worth 20 points. Royal marriages (ones in the trump suit) are worth 40 points. Note: the points only count if you win at least one trick.</p>
-<p><strong>Swapping the Trump Card</strong> If you have the jack of trump and it is your lead, you can swap the jack with the trump card under the stack by clicking on the trump card.</p>
-<p><strong>Closing the Stack</strong> To close the stack, click on the top card of the stack.</p>
-<p><strong>Viewing your Tricks</strong> To see the cards you have taken, click on the pile of cards to the right of your hand.</p>
+<ul>
+<li><p><strong>Marriages</strong> If you have both the king and queen of a suit, and lead with either, it automatically scores a marriage. A regular marriage is worth 20 points. Royal (trump suit) marriages are worth 40 points. Note: the points only count if you win at least one trick.</p></li>
+<li><p><strong>Swapping the Trump Card</strong> If you have the jack of trump and it is your lead, you can swap the jack with the trump card under the stack by clicking on the trump card.</p></li>
+<li><p><strong>Closing the Stack</strong> To close the stack, click on the top card of the stack.</p></li>
+<li><p><strong>Viewing your Tricks</strong> To see the cards you have taken, click on the pile of cards to the right of your hand.</p></li>
+</ul>
+<h3 id="scoring">Scoring</h3>
+<p>The first player to reach 66 points wins. The winner earns either 1, 2, or 3 game points, depending on how many points their opponent had at the end of the game, or when the deck was closed if the winner closed the deck. <!-- If the winner closed the deck, they get 1 game points if their opponent had 33 or more points when the deck was closed, 2 game points if the opponent had from 1 to 32 points when the deck was closed, or 3 game points if the opponent had no tricks when the deck was closed.--> If a player closes the deck but fails to reach 66 first, the other player wins at least 2 game points.</p>
+<table>
+<thead>
+<tr class="header">
+<th align="center">Opponent</th>
+<th align="center">  Game Points  </th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">33+</td>
+<td align="center">1</td>
+</tr>
+<tr class="even">
+<td align="center">&lt; 33</td>
+<td align="center">2</td>
+</tr>
+<tr class="odd">
+<td align="center">no tricks</td>
+<td align="center">3</td>
+</tr>
+<tr class="even">
+<td align="center">  failed close  </td>
+<td align="center">2 or 3*</td>
+</tr>
+</tbody>
+</table>
+<p>*3 game points if the non-closer had no tricks when the stack was closed.</p>
+<!--
+| &nbsp; Winner &nbsp; | Loser | &nbsp; Game Points &nbsp; |
+|:---:|:---:|:---:|
+| &nbsp; 66+ or last trick &nbsp; | 33+ (at close) | 1 | 
+| 66+ or last trick | &nbsp; < 33 (at close) &nbsp; | 2 | 
+| 66+ or last trick | 0 (at close) | 3 |
+| &nbsp; 1+ at close &nbsp; | &nbsp; failed close &nbsp; | 2 | 
+| &nbsp; 0 at close &nbsp; | &nbsp; failed close &nbsp; | 3 |
+-->
 <p><br> <br> <br> <br></p>
 </body>
 </html>

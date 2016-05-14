@@ -1,7 +1,10 @@
 ''' 
 A program to let the user play sixty-six and schnapsen against the computer.
 
-To do: Make the computer smarter. 
+To do: 
+  * Make the computer smarter. 
+    - Sometimes the computer can win with one move, and it should be smart enough to detect that.
+  * On a tie in 66, the next game should be worth an extra point. 
 '''
 
 if schnapsenMode
@@ -9,7 +12,8 @@ if schnapsenMode
 else
   lowRank = '9'
 
-alternateDeals = 1 # always counts as true in schnapsenMode, but in sixty-six the winner deals if set to false.  
+
+alternateDeals = 0 # always counts as true in schnapsenMode, but in sixty-six the winner deals if set to false.  
 
 cardPath = 'images/cards/'
 
@@ -19,7 +23,7 @@ suitString = {C: '&clubs;', D: '<span style="color:red">&diams;</span>', H: '<sp
 
 valueRank = {9: 9, 10: 13, J: 10, Q: 11, K: 12, A: 14}
 valuePoints = {9: 0, 10: 10, J: 2, Q: 3, K: 4, A: 11}
-#valuePoints = {9: 0, 10: 10, J: 0, Q: 0, K: 10, A: 10}
+#valuePoints = {9: 0, 10: 10, J: 0, Q: 5, K: 5, A: 10}
 
 randElement = (array) -> array[Math.floor(Math.random() * array.length)]
 
@@ -145,8 +149,8 @@ class Card
     this.id = this.value+this.suit
     this.isTrump = () -> this.suit == game.trumpSuit
     this.toString = () -> this.value+suitString[this.suit]
-    this.front = "<img src='#{cardPath}#{this.id}.png'></img>"
-    this.back = "<img src='#{cardPath}back.png'></img>"
+    this.front = "<img width = 90px, src='#{cardPath}#{this.id}.png'></img>"
+    this.back = "<img width = 90px, src='#{cardPath}back.png'></img>"
     this.turnedUp = false
     this.html = document.createElement("div")
     this.html.innerHTML = this.back
@@ -162,6 +166,7 @@ class Card
       when "player" then this.playCard()
       when "trumpCard" then this.swap()
       when "playerHaul" then game.showHaul()
+      when "computerHaul" then game.showComputerHaul()
   moveTo: (x,y,z=10) ->
     this.html.style.left = x+"px"
     this.html.style.top = y+"px"
@@ -173,6 +178,7 @@ class Card
     this.html.innerHTML = this.back
     this.faceUp = false
   playCard: () =>
+    gameOver = false
     if playerCard.isEmpty()
       hand = player.getCards()
       if game.playerLeads or isLegal(computerCard.select(),this,hand)
@@ -289,13 +295,15 @@ class Game
     this.nonCloserPoints = 0
     this.round = 1
     this.gameNumber = 1
+    this.carryOverPoints = 0
+    this.showScore = true
   initialize: () ->
     deck.shuffle()
     # deal player cards
     if schnapsenMode
       player.placeUp(card) for card in deck.cards[15..19]
     else
-      player.placeUp(card) for card in deck.cards[18..24]
+      player.placeUp(card) for card in deck.cards[18..23]
     player.display()
     # deal computer cards
     if schnapsenMode
@@ -318,6 +326,7 @@ class Game
       card.location = 'talon' for card in deck.cards[0..10]
     card.moveTo(talon.x - 2*i,talon.y,talon.z+i) for card, i in talon.getCards()
     # post the initial score
+    document.getElementById("scorebar").addEventListener("click",game.toggleScorebar)
     this.score()
   playerDraw: (location) ->
     card = location.select()
@@ -349,7 +358,19 @@ class Game
       computerProvisional = 0
     else
       computerProvisional = this.computerPoints
-    document.getElementById("scorebar").innerHTML="<p>You: #{playerProvisional} points. #{this.playerMarriages} &nbsp;  &nbsp; &nbsp; &nbsp; &nbsp; Trump: <span style='font-size:22px;'>#{suitString[this.trumpSuit]}</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Computer: #{computerProvisional} points. #{this.computerMarriages}"
+    if this.showScore
+      document.getElementById("scorebar").innerHTML="<p>You: #{playerProvisional} points. #{this.playerMarriages} &nbsp;  &nbsp; &nbsp; &nbsp; &nbsp; Trump: <span style='font-size:24px;'>#{suitString[this.trumpSuit]}</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Computer: #{computerProvisional} points. #{this.computerMarriages}"
+    else
+      document.getElementById("scorebar").innerHTML="<p>Score bar hidden. Click again to show scores.<span style='font-size:24px;'> &nbsp; </span>"
+  toggleScorebar: () =>
+    if this.showScore
+      this.showScore = false
+      this.score()
+      # document.getElementById("scorebar").style.visibility='hidden'
+    else
+      this.showScore = true
+      this.score()
+      #document.getElementById("scorebar").style.visibility=''
   checkWinner: (lastTrickWinner='none') =>
     gameOver = false
     this.score()
@@ -370,9 +391,9 @@ class Game
           else # if the computer was the one who closed the deck (but player got 66).
             this.playerLeads = false
             if this.nonCloserPoints > 0
-              this.announceWinner('player',2,'Unsuccessful fold. ')
+              this.announceWinner('player',2,'Unsuccessful close. ')
             else
-              this.announceWinner('player',3,'Unsuccessful fold. ')
+              this.announceWinner('player',3,'Unsuccessful close. ')
         else # if the computer got 66 after deck was closed.
           if this.deckCloser == 'computer'
             this.playerLeads = true
@@ -387,9 +408,9 @@ class Game
           else #if it was the player who closed the deck (but computer got 66).
             this.playerLeads = true
             if this.nonCloserPoints > 0
-              this.announceWinner('computer',2,'Unsuccessful fold. ')
+              this.announceWinner('computer',2,'Unsuccessful close. ')
             else
-              this.announceWinner('computer',3,'Unsuccessful fold. ')
+              this.announceWinner('computer',3,'Unsuccessful close. ')
         this.nextGame()
       else # No one has 66 points yet
         if player.getCards().length == 0
@@ -397,15 +418,15 @@ class Game
           if this.deckCloser == 'player'
             this.playerLeads = true
             if this.nonCloserPoints > 0
-              this.announceWinner('computer',2,'Unsuccessful fold. ')
+              this.announceWinner('computer',2,'Unsuccessful close. ')
             else
-              this.announceWinner('computer',3,'Unsuccessful fold. ')
+              this.announceWinner('computer',3,'Unsuccessful close. ')
           else # computer closed the deck but didn't get 66 points
             this.playerLeads = false
             if this.nonCloserPoints > 0
-              this.announceWinner('player',2,'Unsuccessful fold. ')
+              this.announceWinner('player',2,'Unsuccessful close. ')
             else
-              this.announceWinner('player',3,'Unsuccessful fold. ')
+              this.announceWinner('player',3,'Unsuccessful close. ')
           this.nextGame()
     else # if the deck was not closed
       if this.playerPoints > 65 or this.computerPoints > 65 # if someone has reached 66
@@ -435,21 +456,29 @@ class Game
           if schnapsenMode
             this.announceWinner(lastTrickWinner,1)
           else
-            alert("Wow, it's a tie!")
+            this.announceWinner('tie',0)
           this.nextGame()
     return gameOver
   announceWinner: (winner,points,preamble = '') ->
-    if winner == 'player'
-      this.playerGamepoints += points
+    if winner == 'tie'
+      this.carryOverPoints += 1
+      text = "It's a tie! The winner of the next round will get 1 extra game point.\n \n"
+      rest = "So far the score is: \n \n Computer: #{this.computerGamepoints} \n Player: #{this.playerGamepoints} \n \n Would you like to keep playing? \n \n"
+      alert(text+rest)
     else
-      this.computerGamepoints += points
-    subject = {'player': 'You win ','computer': 'The computer wins '}
-    if points > 1
-      winnings = "#{points} game points! "
-    else
-      winnings = "#{points} game point. "
-    rest = "So far the score is \n \n Computer: #{this.computerGamepoints} \n Player: #{this.playerGamepoints} \n \n Would you like to play again? \n \n"
-    alert(preamble+subject[winner]+winnings+rest)
+      points += this.carryOverPoints
+      this.carryOverPoints = 0
+      if winner == 'player'
+        this.playerGamepoints += points
+      else
+        this.computerGamepoints += points
+      subject = {'player': "You win #{this.playerPoints} to #{this.computerPoints} ",'computer': "The computer wins #{this.computerPoints} to #{this.playerPoints} "}
+      if points > 1
+        winnings = "(#{points} game points). \n \n"
+      else
+        winnings = "(#{points} game point). \n \n"
+      rest = "So far the score is \n \n Computer: #{this.computerGamepoints} \n Player: #{this.playerGamepoints} \n \n Would you like to keep playing? \n \n"
+      alert(preamble+subject[winner]+winnings+rest)
     return
   nextGame: () ->
     card.reset() for card in deck.cards
@@ -481,6 +510,15 @@ class Game
       playerHaul.visible = true
       card.moveTo(playerHaul.x + 15*(card.html.style.zIndex-playerHaul.z),playerHaul.y,card.html.style.zIndex) for card in playerHaul.getCards()
       #setTimeout(this.showHaul,4000)
+  showComputerHaul: () ->
+    if computerHaul.visible
+      card.turnDown() for card in computerHaul.getCards()
+      computerHaul.visible = false
+      card.moveTo(computerHaul.x-2*(card.html.style.zIndex-computerHaul.z),computerHaul.y,card.html.style.zIndex) for card in computerHaul.getCards()
+    else
+      card.turnUp() for card in computerHaul.getCards()
+      computerHaul.visible = true
+      card.moveTo(computerHaul.x + 15*(card.html.style.zIndex-computerHaul.z),computerHaul.y,card.html.style.zIndex) for card in computerHaul.getCards()
 
 class Deck # extends Stack
   constructor: () ->
@@ -502,6 +540,7 @@ class Table
     this.html = document.getElementById('table')
     for card in deck.cards
       this.html.appendChild(card.html)
+
 
 isLegal = (cardLed,card2,hand2) ->
   suitFollowers = (card for card in hand2 when card.suit == cardLed.suit)
@@ -625,9 +664,11 @@ playerCard = new Location('playerCard',450,50,10,true)
 computerCard = new Location('computerCard',350,50,10,true)
 if schnapsenMode
   playerHaul = new Location('playerHaul',650,200,10,false)
+  computerHaul = new Location('computerHaul',650,50,10,false)
 else
   playerHaul = new Location('playerHaul',750,200,10,false)
-computerHaul = new Location('computerHaul',750,-300,10,false)
+  computerHaul = new Location('computerHaul',750,50,10,false)
+# computerHaul = new Location('computerHaul',750,-300,10,false)
 trumpCard = new Location('trumpCard',100,50,5,true)
 
 
